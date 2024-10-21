@@ -1,0 +1,54 @@
+classdef BaseDataset
+    properties (Access=public)
+        % General parameters for all projects
+        dataset_path (1, 1) string
+        dataset_config struct
+
+        height (1, 1) {mustBeInteger}
+        width (1, 1) {mustBeInteger}
+        
+        crop_edge (1, 1) {mustBeInteger}
+        fovx (1, 1) {mustBeA(fovx, {'int', 'single', 'double'})}
+        fovy (1, 1){mustBeA(fovy, {'int', 'single', 'double'})}
+
+%         ransac_rho (1, 1) {mustBeA(ransac_rho, {'single', 'double'})}
+%         ransac_iter (1, 1) {mustBeInteger}
+%         ransac_repeat (1, 1) {mustBeInteger}
+%         frame_start (1, 1) {mustBeInteger}
+%         frame_stride (1, 1) {mustBeInteger}
+%         frame_pairs (1, 1) {mustBeInteger}
+%         epsilon (1, 1) {mustBeA(epsilon, {'single', 'double'})}
+%         match_threshold (1 ,1) {mustBeInteger}
+%         max_ratio (1, 1) {mustBeA(max_ratio, {'single', 'double'})}
+    end
+    
+    methods (Access=public)
+        function obj = BaseDataset(scene_config_path)
+            addpath('../../utils/')
+
+            obj.dataset_config = load_config(scene_config_path);
+            obj.dataset_path = obj.dataset_config.data.input_path;
+            obj.height = obj.dataset_config.cam.H;
+            obj.width = obj.dataset_config.cam.W;
+            
+            if isfield(obj.dataset_config.cam, 'crop_edge')
+                obj.crop_edge = obj.dataset_config.cam.crop_edge;
+            else
+                obj.crop_edge = 0;
+            end
+
+            obj.ransac_rho = obj.dataset_config.ransac.rho;
+            obj.ransac_iter = obj.dataset_config.ransac.iter;
+            obj.ransac_repeat = obj.dataset_config.ransac.repeat;
+            obj.frame_start = obj.dataset_config.frame_start;
+            obj.frame_stride = obj.dataset_config.frame_stride;
+            obj.frame_pairs = obj.dataset_config.frame_pairs;
+            obj.epsilon = obj.dataset_config.epsilon;
+            obj.match_threshold = obj.dataset_config.match_threshold;
+            obj.max_ratio = obj.dataset_config.max_ratio;
+        end
+    
+    end
+end
+
+

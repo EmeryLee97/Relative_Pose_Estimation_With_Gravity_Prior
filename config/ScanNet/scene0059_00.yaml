@@ -1,0 +1,5 @@
+inherit_from: /Users/xuhuili/Documents/SA/Relative_Pose_Estimation_With_Gravity_Prior/config/ScanNet/scannet.yaml
+data:
+  input_path: /Users/xuhuili/datasets/ScanNet/scene0059_00
+  output_path: output/ScanNet/scene0059
+  scene_name: scene0059_00
