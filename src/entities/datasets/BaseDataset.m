@@ -9,7 +9,7 @@ classdef BaseDataset
     
     methods (Access=public)
         function obj = BaseDataset(scene_config_path)
-            addpath('../../utils/')
+            addpath('src/utils/')
 
             obj.dataset_config = load_config(scene_config_path);
             obj.dataset_path = obj.dataset_config.data.input_path;

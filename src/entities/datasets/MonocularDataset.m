@@ -19,7 +19,7 @@ classdef MonocularDataset < BaseDataset
     
     methods (Access=public)
         function obj = MonocularDataset(scene_config_path)
-            addpath('../../utils/')
+            addpath('src/utils/')
 
             obj@BaseDataset(scene_config_path)
             obj.fx = obj.dataset_config.cam.fx;

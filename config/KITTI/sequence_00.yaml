@@ -1,5 +1,5 @@
-inherit_from: /Users/xuhuili/Documents/SA/Relative_Pose_Estimation_With_Gravity_Prior/config/kitti/scannet.yaml
+inherit_from: /Users/xuhuili/Documents/SA/Relative_Pose_Estimation_With_Gravity_Prior/config/kitti/kitti.yaml
 data:
-  input_path: /Users/xuhuili/datasets/ScanNet/scene0059_00
-  output_path: output/Kitti/scene0059
+  input_path: /Users/xuhuili/Documents/SA/datasets/kitti
+  output_path: output/Kitti/secuence00
   sequence: 00

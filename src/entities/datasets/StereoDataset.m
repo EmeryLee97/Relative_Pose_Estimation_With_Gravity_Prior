@@ -28,7 +28,7 @@ classdef StereoDataset < BaseDataset
     
     methods (Access=public)
         function obj = StereoDataset(scene_config_path)
-            addpath('../../utils/')
+            addpath('src/utils/')
             obj@BaseDataset(scene_config_path)
 
             % camera_0 parameters

@@ -14,9 +14,10 @@ ransac:
   rho: 0.99
   iter: 10000
   repeat: 1
-  frame_start: 1
-  frame_stride: 30
-  frame_pairs: 50
-  epsilon: 0.003
-  match_threshold: 20
-  max_ratio: 0.6
+frame_start: 1
+frame_stride: 30
+frame_pairs: 50
+epsilon: 0.003
+match_threshold: 20
+max_ratio: 0.6
+feature_type: "SIFT"

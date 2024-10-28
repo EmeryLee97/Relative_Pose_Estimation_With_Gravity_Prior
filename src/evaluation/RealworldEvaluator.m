@@ -1,10 +1,10 @@
 
 classdef RealworldEvaluator
     properties
-        dataset {mustBeA(dataset, 'BaseDataset')}
-        logger {mustBeA(logger, 'Logger')}
-        method_list {mustBeA(method_list, 'string')}
-        feature_type {mustBeText}
+        dataset BaseDataset
+        logger Logger
+        method_list string
+        feature_type string
         ransac_rho {mustBeA(ransac_rho, {'single', 'double'})}
         ransac_iter {mustBeInteger}
         ransac_repeat {mustBeInteger}
@@ -23,12 +23,12 @@ classdef RealworldEvaluator
         function obj = RealworldEvaluator(cfg_path, dataset_name)
             % Constructor
 
-            addpath('../entities/datasets')
-            addpath('../entities/gBnB_opt/')
-            addpath('../entities/gBnB_sampling/')
-            addpath('../entities/gBnB_stabbing/')
-            addpath('../entities/RANSAC+3pt')
-            addpath('../entities/RANSAC+5pt')           
+            addpath('src/entities/datasets')
+            addpath('src/entities/gBnB_opt/')
+            addpath('src/entities/gBnB_sampling/')
+            addpath('src/entities/gBnB_stabbing/')
+            addpath('src/entities/RANSAC+3pt')
+            addpath('src/entities/RANSAC+5pt')           
             
             if strcmpi(dataset_name, 'TUM_RGBD')
                 obj.dataset = TUM_RGBD(cfg_path);
@@ -41,11 +41,6 @@ classdef RealworldEvaluator
             end
             
             obj.method_list = ["gBnB", "SaBnB", "ISBnB", "RANSAC_3pt", "RANSAC_5pt"];
-            frame_pair_list = ones(1, length(obj.method_list)) * obj.frame_pairs;
-            repeat_list = [1, 1, 1, obj.ransac_repeat, obj.ransac_repeat];
-            obj.logger = Logger(obj.method_list, repeat_list, frame_pair_list);
-
-            % TODO: add feature type in config file
             obj.feature_type = obj.dataset.dataset_config.feature_type;
             obj.ransac_rho = obj.dataset.dataset_config.ransac.rho;
             obj.ransac_iter = obj.dataset.dataset_config.ransac.iter;
@@ -55,10 +50,12 @@ classdef RealworldEvaluator
             obj.frame_pairs = obj.dataset.dataset_config.frame_pairs;
             obj.epsilon = obj.dataset.dataset_config.epsilon;
             obj.match_threshold = obj.dataset.dataset_config.match_threshold;
-            obj.max_ratio = obj.dataset.dataset_config.max_ratio;
-            
+            obj.max_ratio = obj.dataset.dataset_config.max_ratio;    
             obj.outlier_rates = zeros(1, obj.frame_pairs);
             obj.pts_nums = zeros(1, obj.frame_pairs);
+            frame_pair_list = ones(1, length(obj.method_list)) .* obj.frame_pairs;
+            repeat_list = [1, 1, 1, obj.ransac_repeat, obj.ransac_repeat];
+            obj.logger = Logger(obj.method_list, repeat_list, frame_pair_list);
         end
 
         function [pts_1, pts_2] = detect_and_match(obj, gray_1, gray_2)
@@ -77,8 +74,8 @@ classdef RealworldEvaluator
                 error("Unsupported Feature Type!")
             end
 
-            [f1, vpts_1] = extractFeatures(gray, point_set_1);
-            [f2, vpts_2] = extractFeatures(gray, point_set_2);
+            [f1, vpts_1] = extractFeatures(gray_1, point_set_1);
+            [f2, vpts_2] = extractFeatures(gray_2, point_set_2);
 
             indexPairs = matchFeatures(f1, f2, 'MatchThreshold', obj.match_threshold, 'MaxRatio', obj.max_ratio);
 
@@ -151,12 +148,12 @@ classdef RealworldEvaluator
 
                 % Compute number of matchings and outlier rate
                 [obj.outlier_rates(i), obj.pts_nums(i)] = RealworldEvaluator.get_outlier_rate( ...
-                    pts_1, pts_2, rot_axis_gt, obj.epsilon);
+                    pts_1, pts_2, rot_axis_gt, rot_angle_gt, trans_gt, obj.epsilon);
 
                 % Run algorithms
-                obj.run_gBnB(pts_1, pts_2, rot_axis, rot_axis_gt, rot_angle_gt, trans_gt, i);
-                obj.run_SaBnB(360, pts_1, pts_2, rot_axis, rot_axis_gt, rot_angle_gt, trans_gt, i);
-                obj.run_ISBnB(pts_1, pts_2, rot_axis, rot_axis_gt, rot_angle_gt, trans_gt, i);
+                obj.run_gBnB(pts_1, pts_2, rot_axis_gt, rot_angle_gt, trans_gt, i);
+                obj.run_SaBnB(360, pts_1, pts_2, rot_axis_gt, rot_angle_gt, trans_gt, i);
+                obj.run_ISBnB(pts_1, pts_2, rot_axis_gt, rot_angle_gt, trans_gt, i);
 
                 for j = 1:obj.ransac_repeat
                     obj.run_RANSAC_3pt(pts_1, pts_2, rot_axis_gt, rot_angle_gt, trans_gt, i, j);
@@ -190,15 +187,14 @@ classdef RealworldEvaluator
             trans_gt = trans_gt / norm(trans_gt);
         end
     
-        function [point_num, outlier_rate] = get_outlier_rate(pts_1, pts_2, rot_axis, epsilon)
+        function [outlier_rate, point_num] = get_outlier_rate(pts_1, pts_2, rot_axis, rot_angle_gt, trans_gt, epsilon)
             b = cross(pts_2, rot_axis * pts_1);
             c = -cross(pts_2, rot_axis^2 * pts_1);
             a = cross(pts_2, pts_1) + cross(pts_2, rot_axis^2 * pts_1);
             residual = abs(trans_gt' * (a + b*sin(rot_angle_gt) + c*cos(rot_angle_gt)));
             outlier_rate = sum(residual > epsilon) / size(pts_1, 2);
             point_num = size(pts_1, 2);
-            fprintf("Number of points: %d\n", point_num);
-            fprintf("Outlier rate: %d\n", outlier_rate);
+            fprintf("Number of point pairs: %d, with outlier rate: %d\n", point_num, outlier_rate);
         end
 
         function trans_err = get_trans_err(trans_est, trans_gt)
