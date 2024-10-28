@@ -15,15 +15,6 @@ classdef MonocularDataset < BaseDataset
         color_paths string
         depth_paths string
         
-%         ransac_rho (1, 1) {mustBeA(ransac_rho, {'single', 'double'})}
-%         ransac_iter (1, 1) {mustBeInteger}
-%         ransac_repeat (1, 1) {mustBeInteger}
-%         frame_start (1, 1) {mustBeInteger}
-%         frame_stride (1, 1) {mustBeInteger}
-%         frame_pairs (1, 1) {mustBeInteger}
-%         epsilon (1, 1) {mustBeA(epsilon, {'single', 'double'})}
-%         match_threshold (1 ,1) {mustBeInteger}
-%         max_ratio (1, 1) {mustBeA(max_ratio, {'single', 'double'})}
     end
     
     methods (Access=public)
@@ -59,15 +50,6 @@ classdef MonocularDataset < BaseDataset
                     'TangentialDistortion', obj.distortion(3:4));
             end
 
-%             obj.ransac_rho = obj.dataset_config.ransac.rho;
-%             obj.ransac_iter = obj.dataset_config.ransac.iter;
-%             obj.ransac_repeat = obj.dataset_config.ransac.repeat;
-%             obj.frame_start = obj.dataset_config.frame_start;
-%             obj.frame_stride = obj.dataset_config.frame_stride;
-%             obj.frame_pairs = obj.dataset_config.frame_pairs;
-%             obj.epsilon = obj.dataset_config.epsilon;
-%             obj.match_threshold = obj.dataset_config.match_threshold;
-%             obj.max_ratio = obj.dataset_config.max_ratio;
         end
     
     end

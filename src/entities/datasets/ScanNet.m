@@ -50,6 +50,12 @@ classdef ScanNet < MonocularDataset
                 depth = depth(obj.crop_edge+1:end-obj.crop_edge, obj.crop_edge+1:end-obj.crop_edge);
             end
         end
+
+        function [gray, pose] = get_gray_pose(obj, idx)
+            % Return gray image and camera pose with given index
+            [rgb, ~, pose] = obj.get_rgb_depth_pose(idx);
+            gray = rgb2gray(rgb);
+        end
     end
 
     methods (Static)
