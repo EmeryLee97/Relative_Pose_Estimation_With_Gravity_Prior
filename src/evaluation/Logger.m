@@ -44,6 +44,33 @@ classdef Logger
             end
         end
 
+        function print_result(obj)
+            fprintf("-------------Experiment Results-------------\n");
+            for runtime_idx = 1:length(obj.method_list)
+                fprintf("Median running time of %s: %f sec\n", ...
+                    obj.method_list(runtime_idx), ...
+                    median(obj.runtime_map(obj.method_list(runtime_idx))) ...
+                );
+            end
+            fprintf("\n");
+            
+            for rot_err_idx = 1:length(obj.method_list)
+                fprintf("Mean rotation error of %s: %f deg\n", ...
+                    obj.method_list(rot_err_idx), ...
+                    mean(obj.rot_err_map(obj.method_list(rot_err_idx))) ...
+                );
+            end
+            fprintf("\n");
+
+            for trans_err_idx = 1:length(obj.method_list)
+                fprintf("Mean translation error of %s: %f deg\n", ...
+                    obj.method_list(trans_err_idx), ...
+                    mean(obj.trans_err_map(obj.method_list(trans_err_idx))) ...
+                );
+            end
+            fprintf("\n");
+        end
+
     end
 
 

@@ -1,4 +1,4 @@
-classdef ScanNet < MonocularDataset
+classdef ScanNet < RGBDDataset
     properties
         poses (:, 4, 4) {mustBeA(poses, {'int', 'float'})}
     end
@@ -6,7 +6,7 @@ classdef ScanNet < MonocularDataset
     methods (Access=public)
         function obj = ScanNet(scene_config_path)
             % Constructor
-            obj@MonocularDataset(scene_config_path);
+            obj@RGBDDataset(scene_config_path);
 
             color_files = ScanNet.sort_files_by_number( ...
                 {dir(fullfile(obj.dataset_path, 'color', '*.jpg')).name});
@@ -40,6 +40,8 @@ classdef ScanNet < MonocularDataset
             % rgb = cv2.resize(rgb, (obj.dataset_config["W"], obj.dataset_config["H"]))
             depth = imread(obj.depth_paths(idx)) / obj.depth_scale;
             pose = squeeze(obj.poses(idx, :, :));
+%             pose_init = squeeze(obj.poses(1, :, :));
+%             pose = pose_init \ pose;
 
             if isfield(obj.dataset_config, 'distortion')
                 rgb = undistortImage(rgb, obj.camera_params);
@@ -51,10 +53,11 @@ classdef ScanNet < MonocularDataset
             end
         end
 
-        function [gray, pose] = get_gray_pose(obj, idx)
+        function [gray, pose, path] = get_gray_pose(obj, idx)
             % Return gray image and camera pose with given index
             [rgb, ~, pose] = obj.get_rgb_depth_pose(idx);
             gray = rgb2gray(rgb);
+            path = obj.color_paths(idx);
         end
     end
 

@@ -2,22 +2,22 @@ project_name: "Relative_pose_with_gravity_prior"
 dataset_name: "ScanNet"
 seed: 0
 cam: 
-  H: 480 
-  W: 640
-  fx: 577.590698
-  fy: 578.729797
-  cx: 318.905426
-  cy: 242.683609
+  H: 968
+  W: 1296
+  fx: 1169.621094
+  fy: 1167.105103
+  cx: 646.295044
+  cy: 489.927032
   depth_scale: 1000
-  crop_edge: 12
+  crop_edge: 0
 ransac:
   rho: 0.99
   iter: 10000
   repeat: 1
 frame_start: 1
 frame_stride: 30
-frame_pairs: 50
-epsilon: 0.003
-match_threshold: 20
-max_ratio: 0.6
-feature_type: "SIFT"
+frame_pairs: 20
+epsilon: 0.001
+match_threshold: 10
+max_ratio: 0.9
+feature_type: "MSER"

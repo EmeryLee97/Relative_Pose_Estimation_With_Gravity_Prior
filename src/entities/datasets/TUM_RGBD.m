@@ -1,4 +1,4 @@
-classdef TUM_RGBD < MonocularDataset
+classdef TUM_RGBD < RGBDDataset
     properties
         poses (:, 4, 4) {mustBeA(poses, {'int', 'float'})}
     end
@@ -6,7 +6,7 @@ classdef TUM_RGBD < MonocularDataset
     methods (Access=public)
         function obj = TUM_RGBD(scene_config_path)
             % Constructor
-            obj@MonocularDataset(scene_config_path);
+            obj@RGBDDataset(scene_config_path);
             frame_rate = 32;
             obj = obj.load_tum(frame_rate);
         end
@@ -73,6 +73,13 @@ classdef TUM_RGBD < MonocularDataset
                 depth = depth(obj.crop_edge+1:end-obj.crop_edge, obj.crop_edge+1:end-obj.crop_edge);
             end
         end
+
+        function [gray, pose, path] = get_gray_pose(obj, idx)
+            % Return gray image and camera pose with given index
+            [rgb, ~, pose] = obj.get_rgb_depth_pose(idx);
+            gray = rgb2gray(rgb);
+            path = obj.color_paths(idx);
+        end
     end
 
     methods (Static)
@@ -108,7 +115,7 @@ classdef TUM_RGBD < MonocularDataset
 
         function pose = transquat2pose(trans_quat)
             % trans_quat: [tx, ty, tz, qx, qy, qz, qw]
-            trans_quat = [trans_quat(end), trans_quat(1:end-1)];
+            trans_quat(4:end) = [trans_quat(end), trans_quat(4:end-1)];
             pose = eye(4);
             pose(1:3, 1:3) = quat2rotm(trans_quat(4:end));
             pose(1:3, 4) = trans_quat(1:3);

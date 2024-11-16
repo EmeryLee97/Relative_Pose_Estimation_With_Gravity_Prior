@@ -1,4 +1,4 @@
-classdef MonocularDataset < BaseDataset
+classdef RGBDDataset < BaseDataset
     properties (Access=public)
 
         fx (1, 1) {mustBeA(fx, {'int', 'single', 'double'})}
@@ -18,7 +18,7 @@ classdef MonocularDataset < BaseDataset
     end
     
     methods (Access=public)
-        function obj = MonocularDataset(scene_config_path)
+        function obj = RGBDDataset(scene_config_path)
             addpath('src/utils/')
 
             obj@BaseDataset(scene_config_path)
@@ -34,9 +34,9 @@ classdef MonocularDataset < BaseDataset
 
             obj.fovx = 2 * atan(obj.width / (2 * obj.fx));
             obj.fovy = 2 * atan(obj.height / (2 * obj.fy));
-            obj.intrinsics = [obj.fx, 0,       obj.cx; ...
-                               0,       obj.fy, obj.cy; ...
-                               0,       0,       1];
+            obj.intrinsics = [obj.fx,  0,       obj.cx; ...
+                              0,       obj.fy,  obj.cy; ...
+                              0,       0,       1];
             
             if isfield(obj.dataset_config.cam, 'depth_scale')
                 obj.depth_scale = obj.dataset_config.cam.depth_scale;

@@ -54,7 +54,13 @@ classdef KittiOdometry < StereoDataset
 
         end
 
-        function [gray_cam0, gray_cam1, pose_cam0, pose_cam1] = get_gray_pose(obj, idx)
+        function [gray_cam0, pose_cam0, path] = get_gray_pose(obj, idx)
+            gray_cam0 = imread(obj.img_paths_cam0(idx));
+            pose_cam0 = squeeze(obj.poses_cam0(idx, :, :));
+            path = obj.img_paths_cam0(idx);
+        end
+
+        function [gray_cam0, gray_cam1, pose_cam0, pose_cam1] = get_gray_pose_stereo(obj, idx)
             gray_cam0 = imread(obj.img_paths_cam0(idx));
             gray_cam1 = imread(obj.img_paths_cam1(idx));
             pose_cam0 = squeeze(obj.poses_cam0(idx, :, :));

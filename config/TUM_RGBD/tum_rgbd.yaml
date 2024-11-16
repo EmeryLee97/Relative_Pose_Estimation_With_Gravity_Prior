@@ -3,14 +3,15 @@ dataset_name: "TUM_RGBD"
 seed: 0
 cam:
   depth_scale: 5000.0
-  crop_edge: 16
+  crop_edge: 0
 ransac:
   rho: 0.99
   iter: 10000
   repeat: 1
-  frame_start: 1
-  frame_stride: 30
-  frame_pairs: 50
-  epsilon: 0.003
-  match_threshold: 20
-  max_ratio: 0.6
+frame_start: 301
+frame_stride: 40
+frame_pairs: 3
+epsilon: 0.003
+match_threshold: 10
+max_ratio: 0.6
+feature_type: "orb"
