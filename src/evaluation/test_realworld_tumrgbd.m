@@ -8,16 +8,12 @@ addpath('gBnB_sampling/');
 addpath('gBnB_stabbing/');
 
 % settings
-img_pairs = 50; % number of image pairs to be tested
-img_gap = 120; % e.g. test between image 0 and image 0+gap
+img_pairs = 2; % number of image pairs to be tested
+img_gap = 100; % e.g. test between image 0 and image 0+gap
 epsilon = 1e-3; % tolerance
 %rho = 0.99; % requested probability of success
 ransac_iter_num = 10000; % RANSAC methods iter times
 ransac_repeat = 50;
-
-K1 = [517.3, 0,     318.6; ...
-      0,     516.5, 255.3; ...
-      0,     0,     1];
 
 % Intrinsic matrix of camera fr3, images are undistored
 K3 = [535.4, 0,     320.1; ...
@@ -158,23 +154,23 @@ for i = 1:img_pairs
     theta_err_gbnb_stabbing(i) = abs(theta_gt - theta_gbnb_stabbing) * 180 / pi;
     t_err_gbnb_stabbing(i) = real(acos(abs(t_gbnb_stabbing' * t_gt))) * 180 / pi; 
 
-    for j = 1:ransac_repeat
-        %--------------------------RANSAC+3pts----------------------------%
-        tic
-        [theta_ransac_3pts, t_ransac_3pts, ~] = ransac_3pt(pts1, pts2, R_v, epsilon, ransac_iter_num);
-        runtime_ransac_3pts(j, i) = toc;
-        theta_err_ransac_3pts(j, i) = abs(theta_gt - theta_ransac_3pts) * 180 / pi;
-        t_err_ransac_3pts(j, i) = real(acos(abs(t_ransac_3pts' * t_gt))) * 180 / pi;
-
-        %--------------------------RANSAC+5pts----------------------------%
-        tic
-        [R_ransac_5pts, t_ransac_5pts, ~] = ransac_5pt(pts1, pts2, R_v, epsilon, ransac_iter_num);
-        runtime_ransac_5pts(j, i) = toc;
-        %theta_ransac_5pts = acos((trace(R_ransac_5pts)-1) / 2);
-        %theta_err_ransac_5pts(i) = abs(theta_gt - theta_ransac_5pts) * 180 / pi;
-        theta_err_ransac_5pts(j, i) = norm(rotationMatrixToVector(R_ransac_5pts' * R_gt)) * 180 / pi;
-        t_err_ransac_5pts(j, i) = real(acos(abs(t_ransac_5pts' * t_gt))) * 180 / pi;
-    end
+%     for j = 1:ransac_repeat
+%         %--------------------------RANSAC+3pts----------------------------%
+%         tic
+%         [theta_ransac_3pts, t_ransac_3pts, ~] = ransac_3pt(pts1, pts2, R_v, epsilon, ransac_iter_num);
+%         runtime_ransac_3pts(j, i) = toc;
+%         theta_err_ransac_3pts(j, i) = abs(theta_gt - theta_ransac_3pts) * 180 / pi;
+%         t_err_ransac_3pts(j, i) = real(acos(abs(t_ransac_3pts' * t_gt))) * 180 / pi;
+% 
+%         %--------------------------RANSAC+5pts----------------------------%
+%         tic
+%         [R_ransac_5pts, t_ransac_5pts, ~] = ransac_5pt(pts1, pts2, R_v, epsilon, ransac_iter_num);
+%         runtime_ransac_5pts(j, i) = toc;
+%         %theta_ransac_5pts = acos((trace(R_ransac_5pts)-1) / 2);
+%         %theta_err_ransac_5pts(i) = abs(theta_gt - theta_ransac_5pts) * 180 / pi;
+%         theta_err_ransac_5pts(j, i) = norm(rotationMatrixToVector(R_ransac_5pts' * R_gt)) * 180 / pi;
+%         t_err_ransac_5pts(j, i) = real(acos(abs(t_ransac_5pts' * t_gt))) * 180 / pi;
+%     end
 end
 
 %%

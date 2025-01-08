@@ -67,7 +67,7 @@ function [t_opt_3d, theta_opt] = solve_BnB_stabbing(pts_1, pts_2, R_v, epsilon)
 
         for i = 1:4
             [new_upper_bounds(i), new_lower_bounds(i), theta_values(i)] = ...
-                get_bound_theta917(a, b, c, current_branch(:, i), epsilon);
+                get_theta_bound_stabbing(a, b, c, current_branch(:, i), epsilon);
         end
         
 

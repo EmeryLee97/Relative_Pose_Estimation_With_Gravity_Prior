@@ -21,6 +21,7 @@ ransac:
   rho: 0.99
   iter: 10000
   repeat: 1
+sample_num: 45
 frame_start: 1
 frame_stride: 11
 frame_pairs: 3

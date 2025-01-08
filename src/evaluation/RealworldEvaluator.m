@@ -4,7 +4,12 @@ classdef RealworldEvaluator
         dataset BaseDataset
         logger Logger
         method_list string
+        
+        % gcransac_module
+        % magsacpp_module
+        usac_module
 
+        sample_num {mustBeInteger}
         feature_type string
         ransac_rho {mustBeA(ransac_rho, {'single', 'double'})}
         ransac_iter {mustBeInteger}
@@ -24,14 +29,25 @@ classdef RealworldEvaluator
         function obj = RealworldEvaluator(cfg_path, dataset_name)
             % Constructor
 
+            addpath('src/entities/')
             addpath('src/entities/datasets')
             addpath('src/utils')
             addpath('src/entities/gBnB_opt/')
             addpath('src/entities/gBnB_sampling/')
             addpath('src/entities/gBnB_stabbing/')
             addpath('src/entities/RANSAC+3pt')
-            addpath('src/entities/RANSAC+5pt')    
-            addpath('src/entities/')
+            addpath('src/entities/RANSAC+5pt') 
+            addpath('src/entities/USAC/')
+            % addpath('src/entities/GCRANSAC')
+            % addpath('src/entities/MAGSACPP')
+            
+            sys_path = string(py.sys.path);
+            if ~any(strcmp(sys_path, fullfile(pwd, 'src/entities/USAC')))
+                py.sys.path().append(fullfile(pwd, 'src/entities/USAC'))
+            end
+            obj.usac_module = py.importlib.import_module('usac');
+            % obj.gcransac_module = py.importlib.import_module('gcransac');
+            % obj.magsacpp_module = py.importlib.import_module('magsac');
             
             if strcmpi(dataset_name, 'TUM_RGBD')
                 obj.dataset = TUM_RGBD(cfg_path);
@@ -43,7 +59,8 @@ classdef RealworldEvaluator
                 fprintf('Unsupported Dataset!')
             end
             
-            obj.method_list = ["gBnB", "SaBnB", "ISBnB", "RANSAC_3pt", "RANSAC_5pt"];
+            obj.method_list = ["gBnB", "SaBnB", "ISBnB", "RANSAC_3pt", "RANSAC_5pt", "GCRANSAC", "MAGSACPP"];
+            obj.sample_num = obj.dataset.dataset_config.sample_num;
             obj.feature_type = obj.dataset.dataset_config.feature_type;
             obj.ransac_rho = obj.dataset.dataset_config.ransac.rho;
             obj.ransac_iter = obj.dataset.dataset_config.ransac.iter;
@@ -57,7 +74,7 @@ classdef RealworldEvaluator
             obj.outlier_rates = zeros(1, obj.frame_pairs);
             obj.pts_nums = zeros(1, obj.frame_pairs);
             frame_pair_list = ones(1, length(obj.method_list)) .* obj.frame_pairs;
-            repeat_list = [1, 1, 1, obj.ransac_repeat, obj.ransac_repeat];
+            repeat_list = [1, 1, 1, obj.ransac_repeat, obj.ransac_repeat, 1, 1];
             obj.logger = Logger(obj.method_list, repeat_list, frame_pair_list);
         end
 
@@ -102,13 +119,15 @@ classdef RealworldEvaluator
                 fprintf("No camera intrinsics!")
             end
 
-            pts_1 = pts_1 ./ vecnorm(pts_1);
-            pts_2 = pts_2 ./ vecnorm(pts_2);
+            pts_1 = pts_1 ./ vecnorm(pts_1); % (3, N)
+            pts_2 = pts_2 ./ vecnorm(pts_2); % (3, N)
         end
 
         function obj = run_gBnB(obj, pts_1, pts_2, rot_axis, rot_angle_gt, trans_gt, frame_idx)
             tic
             [rot_angle, trans, ~] = GBnB(pts_1, pts_2, rot_axis, obj.epsilon);
+            %------------------------------------
+            fprintf("rot_est = %d, rot_gt= %d \n", rot_angle, rot_angle_gt)
             obj.logger.dynamic_vars.runtime_gBnB(frame_idx) = toc;
             obj.logger.dynamic_vars.rot_err_gBnB(frame_idx) = RealworldEvaluator.get_rot_angle_err(rot_angle, rot_angle_gt);     
             obj.logger.dynamic_vars.trans_err_gBnB(frame_idx) = RealworldEvaluator.get_trans_err(trans, trans_gt);
@@ -117,6 +136,7 @@ classdef RealworldEvaluator
         function obj = run_SaBnB(obj, num_samples, pts_1, pts_2, rot_axis, rot_angle_gt, trans_gt, frame_idx)
             tic
             [trans, rot_angle] = solve_BnB_sampling(num_samples, pts_1, pts_2, rot_axis, obj.epsilon);
+            fprintf("rot_est = %d, rot_gt= %d \n", rot_angle, rot_angle_gt)
             obj.logger.dynamic_vars.runtime_SaBnB(frame_idx) = toc;
             obj.logger.dynamic_vars.rot_err_SaBnB(frame_idx) = RealworldEvaluator.get_rot_angle_err(rot_angle, rot_angle_gt);    
             obj.logger.dynamic_vars.trans_err_SaBnB(frame_idx) = RealworldEvaluator.get_trans_err(trans, trans_gt);
@@ -125,6 +145,7 @@ classdef RealworldEvaluator
         function obj = run_ISBnB(obj, pts_1, pts_2, rot_axis, rot_angle_gt, trans_gt, frame_idx)
             tic
             [trans, rot_angle] = solve_BnB_stabbing(pts_1, pts_2, rot_axis, obj.epsilon);
+            fprintf("rot_est = %d, rot_gt= %d \n", rot_angle, rot_angle_gt)
             obj.logger.dynamic_vars.runtime_ISBnB(frame_idx) = toc;
             obj.logger.dynamic_vars.rot_err_ISBnB(frame_idx) = RealworldEvaluator.get_rot_angle_err(rot_angle, rot_angle_gt);    
             obj.logger.dynamic_vars.trans_err_ISBnB(frame_idx) = RealworldEvaluator.get_trans_err(trans, trans_gt);
@@ -146,26 +167,51 @@ classdef RealworldEvaluator
             obj.logger.dynamic_vars.trans_err_RANSAC_5pt(repeat_idx, frame_idx) = RealworldEvaluator.get_trans_err(trans, trans_gt);
         end
 
-        function obj = run_GCRANSAC(obj, pts_1, pts_2, rot_gt, trans_gt, frame_idx)
-            py.importlib.import_module('gcransac');
-            pts1_py = py.numpy.array(pts_1);
-            pts2_py = py.numpy.array(pts_2);
-            [rot, trans] = py.gcransac.run_gcransac(pts1_py, pts2_py);
-            
+        function obj = run_GCRANSAC(obj, pts_1, pts_2, rot_gt, trans_gt, frame_idx)            
+            % reshape 3D point sets from (N, 3) to 2D point sets (2, N)
+            pts1_2d = pts_1 ./ pts_1(3, :); 
+            pts1_2d = pts1_2d(1:2, :)';
+
+            pts2_2d = pts_2 ./ pts_2(3, :); 
+            pts2_2d = pts2_2d(1:2, :)';
+
+            tic
+            % pose_tuple = obj.gcransac_module.run_gcransac(py.numpy.array(pts1_2d), py.numpy.array(pts2_2d));
+            pose_tuple = obj.usac_module.run_gcransac(py.numpy.array(pts1_2d), py.numpy.array(pts2_2d));
+            obj.logger.dynamic_vars.runtime_GCRANSAC(frame_idx) = toc;
+            rot = double(pose_tuple{1});
+            trans = double(pose_tuple{2});
+            obj.logger.dynamic_vars.rot_err_GCRANSAC(frame_idx) = RealworldEvaluator.get_rot_err(rot, rot_gt);
+            obj.logger.dynamic_vars.trans_err_GCRANSAC(frame_idx) = RealworldEvaluator.get_trans_err(trans, trans_gt);
         end
 
         function obj = run_MAGSACPP(obj, pts_1, pts_2, rot_gt, trans_gt, frame_idx)
+            % reshape 3D point sets from (N, 3) to 2D point sets (2, N)
+            pts1_2d = pts_1 ./ pts_1(3, :); 
+            pts1_2d = pts1_2d(1:2, :)';
 
+            pts2_2d = pts_2 ./ pts_2(3, :); 
+            pts2_2d = pts2_2d(1:2, :)';
+
+            tic
+            % pose_tuple = obj.magsacpp_module.run_magsacpp(py.numpy.array(pts1_2d), py.numpy.array(pts2_2d));
+            pose_tuple = obj.usac_module.run_magsacpp(py.numpy.array(pts1_2d), py.numpy.array(pts2_2d));
+            obj.logger.dynamic_vars.runtime_MAGSACPP(frame_idx) = toc;
+            rot = double(pose_tuple{1});
+            trans = double(pose_tuple{2});
+            obj.logger.dynamic_vars.rot_err_MAGSACPP(frame_idx) = RealworldEvaluator.get_rot_err(rot, rot_gt);
+            obj.logger.dynamic_vars.trans_err_MAGSACPP(frame_idx) = RealworldEvaluator.get_trans_err(trans, trans_gt);
         end
 
         function print_result(obj)
             obj.logger.print_result();
         end
 
-        function obj = evaluate(obj)
+        function obj = evaluate(obj, test_outlier)
 
             for i = obj.frame_start : obj.frame_start+obj.frame_pairs-1
-                fprintf("Processing image pair %d\n", i)
+                fprintf('\n')
+                fprintf("Processing image pair %d-%d\n", i, i+obj.frame_stride)
 
                 % Get gray scale images and absolute camera poses
                 [gray_1, pose_1, ~] = obj.dataset.get_gray_pose(i);
@@ -177,26 +223,38 @@ classdef RealworldEvaluator
 
                 % Detect & compute & match features
                 [pts_1, pts_2] = obj.detect_and_match(gray_1, gray_2);
-%                 RealworldEvaluator.check_epipolar_constraint(pts_1, pts_2, rot_gt, trans_gt)
+                % RealworldEvaluator.check_epipolar_constraint(pts_1, pts_2, rot_gt, trans_gt)
 
                 % Compute number of matchings and outlier rate
                 [obj.outlier_rates(i), obj.pts_nums(i)] = RealworldEvaluator.get_outlier_rate( ...
                     pts_1, pts_2, rot_axis_mat, rot_angle_gt, trans_gt, obj.epsilon);
 
-                % Run algorithms
-                fprintf('Running gBnB \n')
-                obj = obj.run_gBnB(pts_1, pts_2, rot_axis_gt, rot_angle_gt, trans_gt, i-obj.frame_start+1);
-                fprintf('Running SaBnB \n')
-                obj = obj.run_SaBnB(360, pts_1, pts_2, rot_axis_gt, rot_angle_gt, trans_gt, i-obj.frame_start+1);
-                fprintf('Running ISBnB \n')
-                obj = obj.run_ISBnB(pts_1, pts_2, rot_axis_gt, rot_angle_gt, trans_gt, i-obj.frame_start+1);
+                if ~test_outlier
+                    % Run algorithms
+                    % fprintf('Running gBnB \n')
+                    % obj = obj.run_gBnB(pts_1, pts_2, rot_axis_gt, rot_angle_gt, trans_gt, i-obj.frame_start+1);
 
-                for j = 1:obj.ransac_repeat
+                    fprintf('Running SaBnB \n')
+                    disp(obj.sample_num)
+                    obj = obj.run_SaBnB(obj.sample_num, pts_1, pts_2, rot_axis_gt, rot_angle_gt, trans_gt, i-obj.frame_start+1);
+
+                    fprintf('Running ISBnB \n')
+                    obj = obj.run_ISBnB(pts_1, pts_2, rot_axis_gt, rot_angle_gt, trans_gt, i-obj.frame_start+1);
+
+                    fprintf('Running GCRANSAC \n')
+                    obj = obj.run_GCRANSAC(pts_1, pts_2, rot_gt, trans_gt, i-obj.frame_start+1);
+
+                    fprintf('Running MAGSAC++ \n')
+                    obj = obj.run_MAGSACPP(pts_1, pts_2, rot_gt, trans_gt, i-obj.frame_start+1);
+
                     fprintf('Running RANSAC&3pt \n')
-                    obj = obj.run_RANSAC_3pt(pts_1, pts_2, rot_axis_gt, rot_angle_gt, trans_gt, i-obj.frame_start+1, j);
                     fprintf('Running RANSAC&5pt \n')
-                    obj = obj.run_RANSAC_5pt(pts_1, pts_2, rot_axis_gt, rot_gt, trans_gt, i-obj.frame_start+1, j);
-                end                
+                    for j = 1:obj.ransac_repeat             
+                        obj = obj.run_RANSAC_3pt(pts_1, pts_2, rot_axis_gt, rot_angle_gt, trans_gt, i-obj.frame_start+1, j);   
+                        obj = obj.run_RANSAC_5pt(pts_1, pts_2, rot_axis_gt, rot_gt, trans_gt, i-obj.frame_start+1, j);
+                    end
+                end
+
             end
 
             obj.logger = obj.logger.update_dict();
@@ -215,7 +273,7 @@ classdef RealworldEvaluator
             rot_axang = rotationMatrixToVector(rot_gt); % postmultiply convention
             rot_angle_gt = norm(rot_axang);
             rot_axis_gt = -rot_axang ./ rot_angle_gt;   
-%             rot_axang = rotmat2vec3d(rot_gt); % premultiply convention, need MATLAB R2022b
+            % rot_axang = rotmat2vec3d(rot_gt); % premultiply convention, need MATLAB R2022b
               
         end
     
@@ -232,16 +290,19 @@ classdef RealworldEvaluator
         function trans_err = get_trans_err(trans_est, trans_gt)
             % Translation (unit vector) error in degree
             trans_err = real(acos(trans_est' * trans_gt / norm(trans_est) /norm(trans_gt))) * 180/pi;
+            if trans_err > 90
+                trans_err = abs(180 - trans_err);
+            end
         end
 
         function rot_angle_err = get_rot_angle_err(rot_angle_est, rot_angle_gt)
             % Rotation angle error in degree
-            rot_angle_err = abs(rot_angle_est - rot_angle_gt) * 180/pi;
+            rot_angle_err = abs(abs(rot_angle_est) - abs(rot_angle_gt)) * 180/pi;
         end
 
         function rot_err = get_rot_err(rot_est, rot_gt)
             rot_err = norm(rotationMatrixToVector(rot_est' * rot_gt)) * 180/pi;
-%             rot_err = norm(rotmat2vec3d(rot_est' * rot_gt)) * 180/pi; % need MATLAB R2022b
+            % rot_err = norm(rotmat2vec3d(rot_est' * rot_gt)) * 180/pi; % need MATLAB R2022b
         end
 
         function res = check_epipolar_constraint(pts_1, pts_2, rel_rot, rel_trans)

@@ -13,11 +13,12 @@ cam:
 ransac:
   rho: 0.99
   iter: 10000
-  repeat: 1
+  repeat: 50
+sample_num: 45
 frame_start: 1
-frame_stride: 30
-frame_pairs: 20
-epsilon: 0.001
-match_threshold: 10
-max_ratio: 0.9
-feature_type: "MSER"
+frame_stride: 40
+frame_pairs: 50
+epsilon: 0.002
+match_threshold: 20
+max_ratio: 0.7
+feature_type: "SIFT"

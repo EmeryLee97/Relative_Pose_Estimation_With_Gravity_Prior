@@ -67,7 +67,7 @@ function [t_opt_3d, theta_opt] = solve_BnB_sampling(N, pts_1, pts_2, R_v, epsilo
 
         for i = 1:4
             [new_upper_bounds(i), new_lower_bounds(i), theta_values(i)] = ...
-                get_bound_theta(current_branch(:, i), a, b, c, N, epsilon);
+                get_theta_bound_sampling(current_branch(:, i), a, b, c, N, epsilon);
         end
         % Assemble the branches with calculated bounds, 5*k matrix
         % [center_1, center_2, half_side_length, lower_bound, upperbound]

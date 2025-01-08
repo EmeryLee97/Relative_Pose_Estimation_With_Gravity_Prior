@@ -32,8 +32,8 @@ K = [718.856, 0,           607.1928; ...
      0,       0,           1];
 
 % Settings
-img_pairs = 50;
-img_gap = 50;
+img_pairs = 3;
+img_gap = 11;
 epsilon = 1e-3;
 rho = 0.99; % requested probability of success
 ransac_iter_num = 10000; % RANSAC methods iter times
@@ -97,8 +97,8 @@ for i = 1 : img_pairs
     img_2 = imread(fullfile(img_path, images(idx_2).name));
 
     % Detect features
-    points_1 = detectSURFFeatures(img_1);
-    points_2 = detectSURFFeatures(img_2);
+    points_1 = detectSIFTFeatures(img_1);
+    points_2 = detectSIFTFeatures(img_2);
 
     [f1, vpts1] = extractFeatures(img_1, points_1);
     [f2, vpts2] = extractFeatures(img_2, points_2);
@@ -139,36 +139,36 @@ for i = 1 : img_pairs
     theta_err_gbnb_opt(i) = abs(theta_gt - theta_gbnb_opt) * 180 / pi;
     t_err_gbnb_opt(i) = real(acos(abs(t_gbnb_opt' * t_gt))) * 180 / pi;
 
-    %-------------------------gBnB+sampling---------------------------%
-    tic
-    [t_gbnb_sampling, theta_gbnb_sampling] = solve_BnB_sampling(360, pts1, pts2, R_v, epsilon);
-    runtime_gbnb_sampling(i) = toc;
-    theta_err_gbnb_sampling(i) = abs(theta_gt - theta_gbnb_sampling) * 180 / pi;
-    t_err_gbnb_sampling(i) = real(acos(abs(t_gbnb_sampling' * t_gt))) * 180 / pi;
+%     %-------------------------gBnB+sampling---------------------------%
+%     tic
+%     [t_gbnb_sampling, theta_gbnb_sampling] = solve_BnB_sampling(360, pts1, pts2, R_v, epsilon);
+%     runtime_gbnb_sampling(i) = toc;
+%     theta_err_gbnb_sampling(i) = abs(theta_gt - theta_gbnb_sampling) * 180 / pi;
+%     t_err_gbnb_sampling(i) = real(acos(abs(t_gbnb_sampling' * t_gt))) * 180 / pi;
+% 
+%     %-------------------------gBnB+stabbing---------------------------%
+%     tic
+%     [t_gbnb_stabbing, theta_gbnb_stabbing] = solve_BnB_stabbing(pts1, pts2, R_v, epsilon);
+%     runtime_gbnb_stabbing(i) = toc;
+%     theta_err_gbnb_stabbing(i) = abs(theta_gt - theta_gbnb_stabbing) * 180 / pi;
+%     t_err_gbnb_stabbing(i) = real(acos(abs(t_gbnb_stabbing' * t_gt))) * 180 / pi;
 
-    %-------------------------gBnB+stabbing---------------------------%
-    tic
-    [t_gbnb_stabbing, theta_gbnb_stabbing] = solve_BnB_stabbing(pts1, pts2, R_v, epsilon);
-    runtime_gbnb_stabbing(i) = toc;
-    theta_err_gbnb_stabbing(i) = abs(theta_gt - theta_gbnb_stabbing) * 180 / pi;
-    t_err_gbnb_stabbing(i) = real(acos(abs(t_gbnb_stabbing' * t_gt))) * 180 / pi;
-
-    for j = 1:ransac_repeat
-
-        %--------------------------RANSAC+3pts----------------------------%
-        tic
-        [theta_ransac_3pts, t_ransac_3pts, ~] = ransac_3pt(pts1, pts2, R_v, epsilon, ransac_iter_num);
-        runtime_ransac_3pts(j, i) = toc;
-        theta_err_ransac_3pts(j, i) = abs(theta_gt - theta_ransac_3pts) * 180 / pi;
-        t_err_ransac_3pts(j, i) = real(acos(abs(t_ransac_3pts' * t_gt))) * 180 / pi;
-
-        %--------------------------RANSAC+5pts----------------------------%
-        tic
-        [R_ransac_5pts, t_ransac_5pts, ~] = ransac_5pt(pts1, pts2, R_v, epsilon, ransac_iter_num);
-        runtime_ransac_5pts(j, i) = toc;
-        theta_err_ransac_5pts(j, i) = norm(rotationMatrixToVector(R_ransac_5pts' * R_gt)) * 180 / pi;
-        t_err_ransac_5pts(j, i) = real(acos(abs(t_ransac_5pts' * t_gt))) * 180 / pi;
-    end
+%     for j = 1:ransac_repeat
+% 
+%         %--------------------------RANSAC+3pts----------------------------%
+%         tic
+%         [theta_ransac_3pts, t_ransac_3pts, ~] = ransac_3pt(pts1, pts2, R_v, epsilon, ransac_iter_num);
+%         runtime_ransac_3pts(j, i) = toc;
+%         theta_err_ransac_3pts(j, i) = abs(theta_gt - theta_ransac_3pts) * 180 / pi;
+%         t_err_ransac_3pts(j, i) = real(acos(abs(t_ransac_3pts' * t_gt))) * 180 / pi;
+% 
+%         %--------------------------RANSAC+5pts----------------------------%
+%         tic
+%         [R_ransac_5pts, t_ransac_5pts, ~] = ransac_5pt(pts1, pts2, R_v, epsilon, ransac_iter_num);
+%         runtime_ransac_5pts(j, i) = toc;
+%         theta_err_ransac_5pts(j, i) = norm(rotationMatrixToVector(R_ransac_5pts' * R_gt)) * 180 / pi;
+%         t_err_ransac_5pts(j, i) = real(acos(abs(t_ransac_5pts' * t_gt))) * 180 / pi;
+%     end
 end
 
 %% show results

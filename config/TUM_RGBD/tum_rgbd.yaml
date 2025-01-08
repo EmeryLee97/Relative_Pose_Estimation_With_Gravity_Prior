@@ -8,10 +8,11 @@ ransac:
   rho: 0.99
   iter: 10000
   repeat: 1
-frame_start: 301
-frame_stride: 40
-frame_pairs: 3
-epsilon: 0.003
-match_threshold: 10
+sample_num: 45
+frame_start: 1
+frame_stride: 120
+frame_pairs: 50
+epsilon: 0.002
+match_threshold: 5
 max_ratio: 0.6
-feature_type: "orb"
+feature_type: "SIFT"
