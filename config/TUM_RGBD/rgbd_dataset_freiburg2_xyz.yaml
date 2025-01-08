@@ -1,4 +1,4 @@
-inherit_from: /Users/xuhuili/Documents/SA/Relative_Pose_Estimation_With_Gravity_Prior/config/TUM_RGBD/tum_rgbd.yaml
+inherit_from: config/TUM_RGBD/tum_rgbd.yaml
 data:
   input_path: /Users/xuhuili/datasets/TUM_RGBD-SLAM/rgbd_dataset_freiburg2_xyz
   output_path: output/TUM_RGBD/rgbd_dataset_freiburg2_xyz/

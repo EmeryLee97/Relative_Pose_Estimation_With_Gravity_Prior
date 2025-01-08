@@ -28,7 +28,7 @@ evaluator = RealworldEvaluator(cfg_path, dataset);
 % imshow(rgb)
 
 % set the input to true to only check outlier ratio
-evaluator = evaluator.evaluate(false);
-
-evaluator.print_result();
+% evaluator = evaluator.evaluate(false);
+% 
+% evaluator.print_result();
 

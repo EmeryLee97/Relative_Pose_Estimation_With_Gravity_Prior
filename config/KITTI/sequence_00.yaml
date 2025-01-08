@@ -1,4 +1,4 @@
-inherit_from: /Users/xuhuili/Documents/SA/Relative_Pose_Estimation_With_Gravity_Prior/config/kitti/kitti.yaml
+inherit_from: config/kitti/kitti.yaml
 data:
   input_path: /Users/xuhuili/Documents/SA/datasets/kitti
   output_path: output/Kitti/secuence00
